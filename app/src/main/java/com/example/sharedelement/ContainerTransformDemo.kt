@@ -1,42 +1,53 @@
-@file:OptIn(ExperimentalSharedTransitionApi::class)
+@file:OptIn(
+    ExperimentalSharedTransitionApi::class, ExperimentalSharedTransitionApi::class,
+    ExperimentalSharedTransitionApi::class
+)
 
-package com.example.sharedelement
+package com.example.mycompose.ui.theme.presentation.CartBuy
 
-import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.SharedTransitionScope.PlaceHolderSize.Companion.animatedSize
-import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateSizeAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,270 +56,412 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
+import androidx.constraintlayout.compose.ConstraintLayout
+import com.example.sharedelement.R
 
-@Preview
+
 @Composable
-fun ContainerTransformDemo(model: MyModel = remember { MyModel().apply { selected = items[1] } }) {
+fun GreetingPreview(Modifier: Modifier) {
+    SharedbyAnimation()
+}
+
+
+sealed class Screen {
+    data object List : Screen()
+    data object Details : Screen()
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun SharedbyAnimation() {
+
+    var showDetails by remember { mutableStateOf<Screen>(Screen.Details) }
+    var car by remember { mutableStateOf(carts[0]) }
     SharedTransitionLayout {
-        LaunchedEffect(key1 = Unit) {
-            while (true) {
-                delay(2500)
-                if (model.selected == null) {
-                    model.selected = model.items[1]
-                } else {
-                    model.selected = null
-                }
-            }
-        }
-        AnimatedContent(
-            model.selected,
+        AnimatedContent(targetState = showDetails, label = "AnimatedContent",
             transitionSpec = {
-                fadeIn(tween(600)) togetherWith
-                        fadeOut(tween(600)) using SizeTransform { _, _ ->
-                    spring()
+                if (targetState == Screen.List) {
+                    slideInHorizontally(animationSpec = spring(100f)) { -it } + fadeIn() togetherWith slideOutHorizontally(
+                        animationSpec = spring(100f)
+                    ) { it } + fadeOut()
+
+
+                } else {
+                    slideInHorizontally(animationSpec = spring(100f)) { -it } + fadeIn() togetherWith slideOutHorizontally(
+                        animationSpec = spring(100f)
+                    ) { it } + fadeOut()
                 }
-            },
-            label = ""
-        ) {
-            // TODO: Double check on container transform scrolling
-            if (it != null) {
-                DetailView(model = model, selected = it, model.items[6])
-            } else {
-                GridView(model = model)
+
+
+            })
+        {
+
+            when (it) {
+                Screen.List -> {
+                    /*  MainContent(sharedTransitionScope = this@SharedTransitionLayout,
+                          animatedVisibilityScope = this@AnimatedContent, modifier = Modifier,
+                          showDetails = {cart,state->
+                              car =cart
+                              if (state) showDetails = Screen.Details
+                          }, list = carts)*/
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Red))
+                }
+
+                Screen.Details -> {
+                    ShoeCard(
+                        onClick = { showDetails = Screen.List },
+                        state = true,
+                        cart = car,
+                        animatedContentScope = this@AnimatedContent
+                    )
+                }
+
             }
+
+
         }
-    }
-}
-@Composable
-fun Details(kitty: Kitty) {
-    Column(
-        Modifier
-            .padding(start = 10.dp, end = 10.dp, top = 10.dp)
-            .fillMaxHeight()
-            .wrapContentHeight(Alignment.Top)
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(start = 10.dp, end = 10.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column {
-                Spacer(Modifier.size(20.dp))
-                Text(
-                    kitty.name,
-                    fontSize = 25.sp,
-                    modifier = Modifier.padding(start = 10.dp)
-                )
-                Text(
-                    kitty.breed,
-                    fontSize = 22.sp,
-                    color = Color.Gray,
-                    modifier = Modifier
-                        .padding(start = 10.dp)
-                )
-                Spacer(Modifier.size(10.dp))
-            }
-            Spacer(Modifier.weight(1f))
-            Icon(
-                Icons.Outlined.Favorite,
-                contentDescription = null,
-                Modifier
-                    .background(Color(0xffffddee), CircleShape)
-                    .padding(10.dp)
-            )
-            Spacer(Modifier.size(10.dp))
-        }
-        Box(
-            modifier = Modifier
-                .padding(bottom = 10.dp)
-                .height(2.dp)
-                .fillMaxWidth()
-                .background(Color(0xffeeeeee))
-        )
-        Text(
-            text =
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent fringilla" +
-                    " mollis efficitur. Maecenas sit amet urna eu urna blandit suscipit efficitur" +
-                    " eget mauris. Nullam eget aliquet ligula. Nunc id euismod elit. Morbi aliquam" +
-                    " enim eros, eget consequat dolor consequat id. Quisque elementum faucibus" +
-                    " congue. Curabitur mollis aliquet turpis, ut pellentesque justo eleifend nec.\n" +
-                    "\n" +
-                    "Suspendisse ac consequat turpis, euismod lacinia quam. Nulla lacinia tellus" +
-                    " eu felis tristique ultricies. Vivamus et ultricies dolor. Orci varius" +
-                    " natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus." +
-                    " Ut gravida porttitor arcu elementum elementum. Phasellus ultrices vel turpis" +
-                    " volutpat mollis. Vivamus leo diam, placerat quis leo efficitur, ultrices" +
-                    " placerat ex. Nullam mollis et metus ac ultricies. Ut ligula metus, congue" +
-                    " gravida metus in, vestibulum posuere velit. Sed et ex nisl. Fusce tempor" +
-                    " odio eget sapien pellentesque, sed cursus velit fringilla. Nullam odio" +
-                    " ipsum, eleifend non consectetur vitae, congue id libero. Etiam tincidunt" +
-                    " mauris at urna dictum ornare.\n" +
-                    "\n" +
-                    "Etiam at facilisis ex. Sed quis arcu diam. Quisque semper pharetra leo eget" +
-                    " fermentum. Nulla dapibus eget mi id porta. Nunc quis sodales nulla, eget" +
-                    " commodo sem. Donec lacus enim, pharetra non risus nec, eleifend ultrices" +
-                    " augue. Donec sit amet orci porttitor, auctor mauris et, facilisis dolor." +
-                    " Nullam mattis luctus orci at pulvinar.\n" +
-                    "\n" +
-                    "Sed accumsan est massa, ut aliquam nulla dignissim id. Suspendisse in urna" +
-                    " condimentum, convallis purus at, molestie nisi. In hac habitasse platea" +
-                    " dictumst. Pellentesque id justo quam. Cras iaculis tellus libero, eu" +
-                    " feugiat ex pharetra eget. Nunc ultrices, magna ut gravida egestas, mauris" +
-                    " justo blandit sapien, eget congue nisi felis congue diam. Mauris at felis" +
-                    " vitae erat porta auctor. Pellentesque iaculis sem metus. Phasellus quam" +
-                    " neque, congue at est eget, sodales interdum justo. Aenean a pharetra dui." +
-                    " Morbi odio nibh, hendrerit vulputate odio eget, sollicitudin egestas ex." +
-                    " Fusce nisl ex, fermentum a ultrices id, rhoncus vitae urna. Aliquam quis" +
-                    " lobortis turpis.\n" +
-                    "\n",
-            modifier = Modifier.skipToLookaheadSize(),
-            color = Color.Gray,
-            fontSize = 15.sp,
-        )
     }
 }
 
-@Suppress("UNUSED_PARAMETER")
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun DetailView(
-    model: MyModel,
-    selected: Kitty,
-    next: Kitty?
+fun MainContent(
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    modifier: Modifier,
+    showDetails: (cart: Cart, state: Boolean) -> Unit,
+    list: List<Cart>
 ) {
-    Column(
-        Modifier
-            .sharedBounds(
-                rememberSharedContentState(key = "container + ${selected.id}"),
-                this@AnimatedVisibilityScope,
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(20.dp))
-            )
+    LazyColumn(
+        modifier = modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(Modifier.fillMaxHeight(0.5f)) {
+        itemsIndexed(list) { _, item ->
+            CartItem(
+                cart = item,
+                modifier = modifier,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+                onClick = showDetails
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun CartItem(
+    cart: Cart,
+    modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    onClick: (cart: Cart, state: Boolean) -> Unit,
+) {
+    Card(
+        modifier = Modifier
+            .clickable { onClick(cart, true) }
+            .fillMaxWidth()
+            .shadow(elevation = 8.dp, shape = RoundedCornerShape(20.dp))
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White // Use a light background for better contrast
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color(0xFF6DD5FA), Color(0xFF2193B0)) // Gradient background
+                    )
+                )
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            with(sharedTransitionScope) {
+                Image(
+                    painter = painterResource(id = cart.image),
+                    contentDescription = null,
+                    modifier = modifier
+                        .sharedElement(
+                            state = rememberSharedContentState(key = "image${cart.id}"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .shadow(elevation = 4.dp, shape = CircleShape), // Add shadow to the image
+                    contentScale = ContentScale.Crop
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    Text(
+                        text = cart.title,
+                        style = TextStyle(
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White // Use white text for better contrast
+                        ),
+                        modifier = Modifier
+                            .sharedElement(
+                                state = rememberSharedContentState(key = "text${cart.id}"),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = cart.body,
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            color = Color.White.copy(alpha = 0.8f) // Slightly transparent text
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .sharedElement(
+                                state = rememberSharedContentState(key = "body${cart.id}"),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            ),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+
+data class Cart(
+    val id: Int,
+    val image: Int,
+    val title: String,
+    val body: String
+)
+
+val carts = listOf(
+    Cart(1, R.drawable.h1, "Hello Mostafa", "This is a sample description for the item."),
+    Cart(2, R.drawable.h2, "Hello Mostafa", "This is a sample description for the item."),
+    Cart(6, R.drawable.h3, "Hello Mostafa", "This is a sample description for the item."),
+    Cart(3, R.drawable.h4, "Hello Mostafa", "This is a sample description for the item."),
+    Cart(4, R.drawable.h5, "Hello Mostafa", "This is a sample description for the item."),
+    Cart(5, R.drawable.h6, "Hello Mostafa", "This is a sample description for the item.")
+)
+
+
+@Composable
+fun SharedTransitionScope.ShoeCard(
+    onClick: () -> Unit,
+    state: Boolean,
+    animatedContentScope: AnimatedVisibilityScope,
+    cart: Cart
+) {
+    var selectedColor by remember { mutableStateOf(Color.Red) }
+    val containerColor by animateColorAsState(
+        targetValue = selectedColor,
+        animationSpec = tween(durationMillis = 1000, delayMillis = 100),
+        label = "color"
+    )
+
+    ShoeCardContent(
+        state = state,
+        onClick = onClick,
+        containerColor = containerColor,
+        onColorSelected = { selectedColor = it },
+        cart = cart,
+        animatedContentScope = animatedContentScope,
+        sharedTransitionScope = this
+    )
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun ShoeCardContent(
+    state: Boolean,
+    onClick: () -> Unit,
+    containerColor: Color,
+    onColorSelected: (Color) -> Unit,
+    cart: Cart,
+    animatedContentScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope
+) {
+    with(sharedTransitionScope) {
+        ConstraintLayout(
+            modifier = Modifier
+                .fillMaxSize()
+                .sharedElement(
+                    state = rememberSharedContentState(key = "cart${cart.id}"),
+                    animatedVisibilityScope = animatedContentScope
+                )
+                .background(containerColor.copy(alpha = 0.5f))
+        ) {
+            val (imageRef, cardRef, colorListRef) = createRefs()
+            val topGuideline = createGuidelineFromTop(0.5f)
+
+            ImageSelection(
+                modifier = Modifier
+                    .sharedElement(
+                        state = rememberSharedContentState(key = "image${cart.id}"),
+                        animatedVisibilityScope = animatedContentScope
+                    )
+                    .constrainAs(imageRef) {
+                        top.linkTo(parent.top)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                    },
+                selectedColor = containerColor
+            )
+
+            Card(
+                modifier = Modifier
+                    .constrainAs(cardRef) {
+                        bottom.linkTo(parent.bottom)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                    }
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.5f)
+                    .clip(RoundedCornerShape(20.dp, 20.dp, 0.dp, 0.dp)),
+                colors = CardDefaults.cardColors(containerColor),
+                elevation = CardDefaults.cardElevation(8.dp)
+            ) {
+                Text(
+                    text = cart.body,
+                    modifier = Modifier
+                        .padding(10.dp, 90.dp, 10.dp, 10.dp)
+                        .sharedElement(
+                            state = rememberSharedContentState(key = "body${cart.id}"),
+                            animatedVisibilityScope = animatedContentScope
+                        ),
+                    color = Color.White,
+                    style = TextStyle(fontSize = 18.sp)
+                )
+            }
+
+            val animatedSize by animateSizeAsState(
+                targetValue = if (state) Size(400f, 800f) else Size(100f, 100f),
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
+
             Image(
-                painter = painterResource(selected.photoResId),
+                painter = painterResource(cart.image),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .clickable { onClick() }
+                    .sharedElement(
+                        state = rememberSharedContentState(key = "image${cart.id}"),
+                        animatedVisibilityScope = animatedContentScope
+                    )
+                    .constrainAs(imageRef) {
+                        top.linkTo(parent.top)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                        bottom.linkTo(cardRef.top)
+                    }
+                    .width(animatedSize.width.dp)
+                    .height(animatedSize.height.dp)
+                    .clip(if (state) RoundedCornerShape(20.dp) else CircleShape),
+                contentScale = ContentScale.FillBounds
+            )
+
+            ColorSelection(
                 modifier = Modifier
                     .padding(10.dp)
-                    .sharedElement(
-                        rememberSharedContentState(key = selected.id),
-                        this@AnimatedVisibilityScope,
-                        placeHolderSize = animatedSize
-                    )
-                    .fillMaxHeight()
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(20.dp))
+                    .constrainAs(colorListRef) {
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                    },
+                onColorSelected = onColorSelected
             )
-            if (next != null) {
-                Image(
-                    painter = painterResource(next.photoResId),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .padding(top = 10.dp, bottom = 10.dp, end = 10.dp)
-                        .fillMaxWidth()
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(20.dp))
-                        .blur(10.dp)
-                )
-            }
-        }
-        Details(kitty = selected)
-    }
-}
-
-context(AnimatedVisibilityScope, SharedTransitionScope)
-@OptIn(ExperimentalAnimationApi::class)
-@Composable
-fun GridView(model: MyModel) {
-    Box(Modifier.background(lessVibrantPurple)) {
-        Box(
-            Modifier
-                .padding(20.dp)
-                .renderInSharedTransitionScopeOverlay(zIndexInOverlay = 2f)
-                .animateEnterExit(fadeIn(), fadeOut())
-        ) {
-            SearchBar()
-        }
-        LazyVerticalGrid(columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(top = 90.dp)
-        ) {
-            items(6) {
-                KittyItem(model.items[it])
-            }
         }
     }
 }
 
-class MyModel {
-    val items = mutableListOf(
-        Kitty("Waffle", R.drawable.waffle, "American Short Hair", 0),
-        Kitty("油条", R.drawable.yt_profile, "Tabby", 1),
-        Kitty("Cowboy", R.drawable.cowboy, "American Short Hair", 2),
-        Kitty("Pepper", R.drawable.pepper, "Tabby", 3),
-        Kitty("Unknown", R.drawable.question_mark, "Unknown", 4),
-        Kitty("Unknown", R.drawable.question_mark, "Unknown", 5),
-        Kitty("YT", R.drawable.yt_profile2, "Tabby", 6),
-    )
-    var selected: Kitty? by mutableStateOf(null)
-}
-
-context(AnimatedVisibilityScope, SharedTransitionScope)
 @Composable
-fun KittyItem(kitty: Kitty) {
-    Column(
-        Modifier
-            .padding(start = 10.dp, end = 10.dp, bottom = 10.dp)
-            .sharedBounds(
-                rememberSharedContentState(key = "container + ${kitty.id}"),
-                this@AnimatedVisibilityScope
-            )
-            .background(Color.White, RoundedCornerShape(20.dp))
+private fun ColorSelection(modifier: Modifier, onColorSelected: (Color) -> Unit) {
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
     ) {
+        items(colorList) { color ->
+            Canvas(
+                modifier = Modifier
+                    .size(50.dp)
+                    .padding(top = 10.dp)
+                    .clickable { onColorSelected(color) }
+            ) {
+                drawCircle(color = color, radius = 50.dp.value)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ImageSelection(modifier: Modifier, selectedColor: Color) {
+    val pagerState = rememberPagerState(pageCount = { 7 })
+
+    LaunchedEffect(selectedColor) {
+        val page = when (selectedColor) {
+            Color.Red -> 0
+            Color.Blue -> 1
+            Color.Green -> 2
+            Color.Yellow -> 3
+            Color.Magenta -> 4
+            Color.Cyan -> 5
+            Color.Black -> 6
+            else -> 0
+        }
+        pagerState.animateScrollToPage(page)
+    }
+
+    HorizontalPager(pagerState) { page ->
+        val imageRes = when (page) {
+            0 -> R.drawable.h1
+            1 -> R.drawable.h2
+            2 -> R.drawable.h3
+            3 -> R.drawable.h4
+            4 -> R.drawable.h5
+            5 -> R.drawable.h6
+            else -> R.drawable.h1
+
+        }
         Image(
-            painter = painterResource(kitty.photoResId),
+            painter = painterResource(imageRes),
             contentDescription = null,
-            contentScale = ContentScale.Crop,
             modifier = Modifier
-                .sharedElement(
-                    rememberSharedContentState(key = kitty.id),
-                    this@AnimatedVisibilityScope,
-                    placeHolderSize = animatedSize
-                )
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xffaaaaaa))
+                .fillMaxWidth()
+                .fillMaxHeight(0.6f),
+            contentScale = ContentScale.FillBounds
         )
-        Spacer(Modifier.size(10.dp))
-        Text(
-            kitty.name,
-            fontSize = 18.sp,
-            modifier = Modifier.padding(start = 10.dp)
-        )
-        Spacer(Modifier.size(5.dp))
-        Text(
-            kitty.breed,
-            fontSize = 15.sp,
-            color = Color.Gray,
-            modifier = Modifier
-                .padding(start = 10.dp)
-        )
-        Spacer(Modifier.size(10.dp))
     }
 }
 
-data class Kitty(val name: String, val photoResId: Int, val breed: String, val id: Int) {
-    override fun equals(other: Any?): Boolean {
-        return other is Kitty && other.id == id
-    }
-}
+val colorList = listOf(
+    Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Magenta, Color.Cyan, Color.Black
+)
 
-private val lessVibrantPurple = Color(0xfff3edf7)
+
