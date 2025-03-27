@@ -20,8 +20,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,18 +36,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,7 +50,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -67,7 +59,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -320,19 +311,7 @@ private fun ShoeCardContent(
             val (imageRef, cardRef, colorListRef) = createRefs()
             val topGuideline = createGuidelineFromTop(0.5f)
 
-            ImageSelection(
-                modifier = Modifier
-                    .sharedElement(
-                        state = rememberSharedContentState(key = "image${cart.id}"),
-                        animatedVisibilityScope = animatedContentScope
-                    )
-                    .constrainAs(imageRef) {
-                        top.linkTo(parent.top)
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                    },
-                selectedColor = containerColor
-            )
+
 
             Card(
                 modifier = Modifier
@@ -389,94 +368,7 @@ private fun ShoeCardContent(
                 contentScale = ContentScale.FillBounds
             )
 
-            ColorSelection(
-                modifier = Modifier
-                    .padding(10.dp)
-                    .constrainAs(colorListRef) {
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                    },
-                onColorSelected = onColorSelected
-            )
         }
     }
 }
 
-@Composable
-private fun ColorSelection(modifier: Modifier, onColorSelected: (Color) -> Unit) {
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        items(colorList) { color ->
-            Canvas(
-                modifier = Modifier
-                    .size(50.dp)
-                    .padding(top = 10.dp)
-                    .clickable { onColorSelected(color) }
-            ) {
-                drawCircle(color = color, radius = 50.dp.value)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun ImageSelection(modifier: Modifier, selectedColor: Color) {
-    val pagerState = rememberPagerState(pageCount = { 7 })
-
-    LaunchedEffect(selectedColor) {
-        val page = when (selectedColor) {
-            Color.Red -> 0
-            Color.Blue -> 1
-            Color.Green -> 2
-            Color.Yellow -> 3
-            Color.Magenta -> 4
-            Color.Cyan -> 5
-            Color.Black -> 6
-            else -> 0
-        }
-        pagerState.animateScrollToPage(page)
-    }
-
-    HorizontalPager(pagerState) { page ->
-        val imageRes = when (page) {
-            0 -> R.drawable.h1
-            1 -> R.drawable.h2
-            2 -> R.drawable.h3
-            3 -> R.drawable.h4
-            4 -> R.drawable.h5
-            5 -> R.drawable.h6
-            else -> R.drawable.h1
-
-        }
-        Image(
-            painter = painterResource(imageRes),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.6f),
-            contentScale = ContentScale.FillBounds
-        )
-    }
-}
-
-val colorList = listOf(
-    Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Magenta, Color.Cyan, Color.Black
-)
-
-@Preview(showBackground = true)
-@Composable
-fun CustomBackgroundBox() {
-    Box(
-        modifier = Modifier
-            .size(100.dp)
-            .drawBehind {
-                drawCircle(
-                    color = Color.Blue,
-                    radius = size.minDimension / 2
-                )
-            }
-    )
-}
