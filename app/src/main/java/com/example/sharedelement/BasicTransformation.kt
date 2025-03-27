@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -47,7 +49,7 @@ fun SharedBoundsDemo() {
         ) { targetState ->
 
             if (!targetState) {
-                MainContent(
+                Content(
                     onShowDetails = {
                         showDetails = true
                     },
@@ -68,8 +70,45 @@ fun SharedBoundsDemo() {
 }
 
 // [START android_compose_animations_shared_element_shared_bounds]
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
-private fun MainContent(
+fun MainContent(){
+    LazyVerticalStaggeredGrid(columns = StaggeredGridCells.Fixed(2)) {
+        items(20) {
+            var showDetails by remember {
+                mutableStateOf(false)
+            }
+            SharedTransitionLayout {
+                AnimatedContent(
+                    showDetails,
+                    label = "basic_transition"
+                ) { targetState ->
+
+                    if (!targetState) {
+                        Content(
+                            onShowDetails = {
+                                showDetails = true
+                            },
+                            animatedVisibilityScope = this@AnimatedContent,
+                            sharedTransitionScope = this@SharedTransitionLayout
+                        )
+                    } else {
+                        DetailsContent(
+                            onBack = {
+                                showDetails = false
+                            },
+                            animatedVisibilityScope = this@AnimatedContent,
+                            sharedTransitionScope = this@SharedTransitionLayout
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Content(
     onShowDetails: () -> Unit,
     modifier: Modifier = Modifier,
     sharedTransitionScope: SharedTransitionScope,
@@ -130,7 +169,7 @@ private fun DetailsContent(
     with(sharedTransitionScope) {
         Column(
             modifier = Modifier
-                .padding(top = 200.dp, start = 16.dp, end = 16.dp)
+                .padding(top = 20.dp, start = 16.dp, end = 16.dp)
                 .sharedBounds(
                     rememberSharedContentState(key = "bounds"),
                     animatedVisibilityScope = animatedVisibilityScope,
